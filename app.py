@@ -41,14 +41,18 @@ vis_params = {
 
 # ========================================
 # 建立訓練資料
-training001 = my_image.sample(
-    region=my_image.geometry(),
+image_for_training = my_image.select(['B3', 'B8', 'B11'])
+
+training001 = image_for_training.sample(
+    region=image_for_training.geometry(),
     scale=10,
     numPixels=10000,
     seed=0,
     geometries=True
 )
 
+clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
+result001 = image_for_training.cluster(clusterer)
 # 使用 simpleKMeans 群集器
 clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
 result001 = my_image.cluster(clusterer)
