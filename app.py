@@ -67,8 +67,6 @@ vis_params_001 = {'min': 0, 'max': 11, 'palette': palette}
 
 # 顯示地圖
 
-Map.addLayer(ndvi, {"min": 0, "max": 1, "palette": ["white", "green"]}, "NDVI")
-
 
 left_layer = geemap.ee_tile_layer(result001, vis_params_001, "wekaCascadeKMeans clustered land cover")
 right_layer = geemap.ee_tile_layer(my_image, vis_params, "Sentinel-2")
