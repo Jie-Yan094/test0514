@@ -32,19 +32,21 @@ my_image =ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
     .first() \
     .select('B.*')
 vis_params = {'min':100, 'max': 3500, 'bands': ['B11',  'B8',  'B3']}
-Sentinel-2 = image.normalizedDifference(["B11","B8 ","B3"]).rename("Sentinel-2")
+sentinel_nd = my_image.normalizedDifference(["B11", "B8", "B3"]).rename("Sentinel_ND")
 
 training001 = my_image.sample(
-    **{
-        'region': my_image.geometry(),  # 若不指定，則預設為影像my_image的幾何範圍。
-        'scale': 10,
-        'numPixels': 10000,
-        'seed': 0, #亂數種子(亂數產生的出發點，可用作檢核過程)
-        'geometries': True,  # 設為False表示取樣輸出的點將忽略其幾何屬性(即所屬網格的中心點)，無法作為圖層顯示，可節省記憶體。
-    }
+    region=my_image.geometry(),
+    scale=10,
+    numPixels=10000,
+    seed=0,
+    geometries=True,
 )
-clusterer_CascadeKMeans = ee.Clusterer.wekaCascadeKMeans().train(training001)
+
+# 訓練群集器，指定為 10 群
+clusterer_CascadeKMeans = ee.Clusterer.wekaCascadeKMeans(numClusters=10).train(training001)
 result001 = my_image.cluster(clusterer_CascadeKMeans)
+
+# Legend palette
 legend_dict1 = {
     'zero': '#1c5f2c',
     'one': '#ab0000',
@@ -55,21 +57,17 @@ legend_dict1 = {
     'six': '#10d22c',
     'seven': '#fae6a0',
     'eight': '#f0f0f0',
-    'night': '#58481f',
+    'nine': '#58481f',
     'ten': '#a0dc00',
 }
-# 為分好的每一群賦予標籤
-
 palette = list(legend_dict1.values())
-vis_params_001 = {'min': 0, 'max': 11, 'palette': palette}
+vis_params_001 = {'min': 0, 'max': 9, 'palette': palette}
 
-# 顯示地圖
-
-
+# 地圖顯示
 left_layer = geemap.ee_tile_layer(result001, vis_params_001, "wekaCascadeKMeans clustered land cover")
 right_layer = geemap.ee_tile_layer(my_image, vis_params, "Sentinel-2")
 
-my_Map = geemap.Map(center=[120.5583462887228, 24.081653403304525], zoom=9)
+my_Map = geemap.Map(center=[24.081653403304525, 120.5583462887228], zoom=9)
 my_Map.split_map(left_layer, right_layer)
-my_Map.add_legend(title='CascadeKMeans_Land Cover Type', legend_dict = legend_dict1, draggable=False, position = 'bottomleft')
-my_Map.to_streamlit(height=600) #把圖畫出來(height=圖的高)
+my_Map.add_legend(title='CascadeKMeans_Land Cover Type', legend_dict=legend_dict1, draggable=False, position='bottomleft')
+my_Map.to_streamlit(height=600)
