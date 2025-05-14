@@ -12,15 +12,16 @@ credentials = service_account.Credentials.from_service_account_info(
     scopes=["https://www.googleapis.com/auth/earthengine"]
 )
 
-# 初始化 GEE
+# 初始化 Earth Engine
 ee.Initialize(credentials)
 
-###############################################
-# 以下是網頁內容
+# ========================================
+# Streamlit 網頁設定
 st.set_page_config(layout="wide")
-st.title("🌍 使用服務帳戶連接 GEE 的 Streamlit App")
+st.title("🌍 使用 simpleKMeans 群集器進行地表分類 (GEE + Streamlit)")
 
-# 地理區域（彰化師大附近）
+# ========================================
+# 定義地點與影像
 my_point = ee.Geometry.Point([120.5583462887228, 24.081653403304525])
 
 # 取得 Sentinel-2 影像
@@ -31,25 +32,29 @@ my_image = ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
     .first() \
     .select('B.*')
 
+# 原始影像視覺化參數
 vis_params = {
     'min': 100,
     'max': 3500,
     'bands': ['B11', 'B8', 'B3']
 }
 
+# ========================================
 # 建立訓練資料
 training001 = my_image.sample(
     region=my_image.geometry(),
     scale=10,
     numPixels=10000,
     seed=0,
-    geometries=True,
+    geometries=True
 )
 
-# 使用 wekaKMeans 群集器（可指定群數）
-clusterer = ee.Clusterer.simpleKMeans(**{'numClusters': 10}).train(training001)
+# 使用 simpleKMeans 群集器
+clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
 result001 = my_image.cluster(clusterer)
-# 建立顏色圖例（剛好 10 群）
+
+# ========================================
+# 視覺化參數與圖例
 legend_dict1 = {
     '0': '#1c5f2c',
     '1': '#ab0000',
@@ -65,11 +70,13 @@ legend_dict1 = {
 palette = list(legend_dict1.values())
 vis_params_001 = {'min': 0, 'max': 9, 'palette': palette}
 
-# 顯示地圖
+# ========================================
+# 建立地圖與圖層
 left_layer = geemap.ee_tile_layer(result001, vis_params_001, "KMeans clustered land cover")
 right_layer = geemap.ee_tile_layer(my_image, vis_params, "Sentinel-2")
 
 my_Map = geemap.Map(center=[24.081653403304525, 120.5583462887228], zoom=9)
 my_Map.split_map(left_layer, right_layer)
-my_Map.add_legend(title='KMeans_Land Cover Type', legend_dict=legend_dict1, draggable=False, position='bottomleft')
+my_Map.add_legend(title='Land Cover Cluster (KMeans)', legend_dict=legend_dict1, draggable=False, position='bottomleft')
 my_Map.to_streamlit(height=600)
+
