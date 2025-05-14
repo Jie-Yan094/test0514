@@ -13,7 +13,11 @@ credentials = service_account.Credentials.from_service_account_info(
 )
 
 # 初始化 Earth Engine
-ee.Initialize(credentials)
+try:
+    ee.Initialize(credentials)
+    print("Earth Engine 初始化成功！")
+except Exception as e:
+    print(f"Earth Engine 初始化失敗：{e}")
 
 # ========================================
 # Streamlit 網頁設定
@@ -32,6 +36,10 @@ my_image = ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
     .first() \
     .select('B.*')
 
+# 檢查影像波段
+print("檢查 my_image 的資訊：")
+print(my_image.getInfo().get('bands'))
+
 # 原始影像視覺化參數
 vis_params = {
     'min': 100,
@@ -43,6 +51,10 @@ vis_params = {
 # 建立訓練資料
 image_for_training = my_image.select(['B3', 'B8', 'B11'])
 
+# 檢查 image_for_training 的資訊
+print("\n檢查 image_for_training 的資訊：")
+print(image_for_training.getInfo().get('bands'))
+
 training001 = image_for_training.sample(
     region=image_for_training.geometry(),
     scale=10,
@@ -51,37 +63,38 @@ training001 = image_for_training.sample(
     geometries=True
 )
 
-clusterer = ee.Clusterer.wekaKMeans(10).train(training001)
-result001 = image_for_training.cluster(clusterer)
+# 檢查 training001 的結構 (前 5 個 feature)
+print("\n檢查 training001 的前 5 個 feature：")
+print(training001.getInfo(max_array_length=5).get('features'))
 
 # 使用 simpleKMeans 群集器
-clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
-result001 = my_image.cluster(clusterer)
+try:
+    clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
+    result001 = my_image.cluster(clusterer)
 
-# ========================================
-# 視覺化參數與圖例
-legend_dict1 = {
-    '0': '#1c5f2c',
-    '1': '#ab0000',
-    '2': '#d99282',
-    '3': '#ff0004',
-    '4': '#ab6c28',
-    '5': '#466b9f',
-    '6': '#10d22c',
-    '7': '#fae6a0',
-    '8': '#f0f0f0',
-    '9': '#58481f',
-}
-palette = list(legend_dict1.values())
-vis_params_001 = {'min': 0, 'max': 9, 'palette': palette}
+    # ========================================
+    # 視覺化參數與圖例
+    legend_dict1 = {
+        '0': '#1c5f2c',
+        '1': '#ab0000',
+        '2': '#d99282',
+        '3': '#ff0004',
+        '4': '#ab6c28',
+        '5': '#466b9f',
+        '6': '#10d22c',
+        '7': '#fae6a0',
+        '8': '#f0f0f0',
+        '9': '#58481f',
+    }
+    palette = list(legend_dict1.values())
+    vis_params_001 = {'min': 0, 'max': 9, 'palette': palette}
 
-# ========================================
-# 建立地圖與圖層
-left_layer = geemap.ee_tile_layer(result001, vis_params_001, "KMeans clustered land cover")
-right_layer = geemap.ee_tile_layer(my_image, vis_params, "Sentinel-2")
+    # ========================================
+    # 建立地圖與圖層
+    left_layer = geemap.ee_tile_layer(result001, vis_params_001, "KMeans clustered land cover")
+    right_layer = geemap.ee_tile_layer(my_image, vis_params, "Sentinel-2")
 
-my_Map = geemap.Map(center=[24.081653403304525, 120.5583462887228], zoom=9)
-my_Map.split_map(left_layer, right_layer)
-my_Map.add_legend(title='Land Cover Cluster (KMeans)', legend_dict=legend_dict1, draggable=False, position='bottomleft')
-my_Map.to_streamlit(height=600)
-
+    my_Map = geemap.Map(center=[24.081653403304525, 120.5583462887228], zoom=9)
+    my_Map.split_map(left_layer, right_layer)
+    my_Map.add_legend(title='Land Cover Cluster (KMeans)', legend_dict=legend_dict1, draggable=False, position='bottomleft')
+    my_Map.to_streamlit(height=600)
