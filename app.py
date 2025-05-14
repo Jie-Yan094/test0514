@@ -51,8 +51,11 @@ training001 = image_for_training.sample(
     geometries=True
 )
 
-clusterer = ee.Clusterer.simpleKMeans().setNumClusters(10).train(training001)
+# 正確的 simpleKMeans 呼叫方式
+clusterer = ee.Clusterer.simpleKMeans(10).train(training001)
+# 用訓練好的 clusterer 套用在影像上
 result001 = image_for_training.cluster(clusterer)
+
 # 使用 simpleKMeans 群集器
 clusterer = ee.Clusterer.simpleKMeans(numClusters=10).train(training001)
 result001 = my_image.cluster(clusterer)
