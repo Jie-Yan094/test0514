@@ -98,3 +98,6 @@ try:
     my_Map.split_map(left_layer, right_layer)
     my_Map.add_legend(title='Land Cover Cluster (KMeans)', legend_dict=legend_dict1, draggable=False, position='bottomleft')
     my_Map.to_streamlit(height=600)
+
+    except Exception as e:
+    st.error(f"執行 KMeans 群集時發生錯誤：{e}")
