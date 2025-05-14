@@ -25,14 +25,13 @@ st.title("🌍 使用服務帳戶連接 GEE 的 Streamlit App")
 # 地理區域
 my_point = ee.Geometry.Point([120.5583462887228, 24.081653403304525])
 
-my_image = (
-    ee.ImageCollection('COPERNICUS/S2_HARMONIZED')
+my_image =ee.ImageCollection('COPERNICUS/S2_HARMONIZED')
     .filterBounds(my_point)
     .filterDate('2021-01-01', '2022-01-01')
     .sort('CLOUDY_PIXEL_PERCENTAGE')
     .first()
     .select('B.*')
-)
+
 vis_params = {'min':100, 'max': 3500, 'bands': ['B11',  'B8',  'B3']}
 
 
