@@ -47,9 +47,8 @@ training001 = my_image.sample(
 )
 
 # 使用 wekaKMeans 群集器（可指定群數）
-clusterer_KMeans = ee.Clusterer.wekaKMeans(numClusters=10).train(training001)
+clusterer_KMeans = ee.Clusterer.wekaKMeans().setOptions(nClusters=10).train(training001)
 result001 = my_image.cluster(clusterer_KMeans)
-
 # 建立顏色圖例（剛好 10 群）
 legend_dict1 = {
     '0': '#1c5f2c',
