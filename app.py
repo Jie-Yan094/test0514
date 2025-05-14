@@ -31,9 +31,8 @@ my_image =ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
     .sort('CLOUDY_PIXEL_PERCENTAGE') \
     .first() \
     .select('B.*')
-
 vis_params = {'min':100, 'max': 3500, 'bands': ['B11',  'B8',  'B3']}
-
+Sentinel-2=image.normalizedDifference(["B11","B8 ","B3"]).rename("Sentinel-2")
 
 training001 = my_image.sample(
     **{
